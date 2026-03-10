@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Cliente {
+  id        Int        @id @default(autoincrement())
+  nombre    String
+  telefono  String?
+  email     String?
+  creadoEn  DateTime   @default(now())
+  vehiculos Vehiculo[]
+  ordenes   OrdenTrabajo[]
+  turnos    Turno[]
+}
+
+model Vehiculo {
+  id        Int            @id @default(autoincrement())
+  cliente   Cliente        @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  marca     String?
+  modelo    String?
+  patente   String         @unique
+  anio      Int?
+  creadoEn  DateTime       @default(now())
+  ordenes   OrdenTrabajo[]
+  turnos    Turno[]
+}
+
+model Turno {
+  id           Int       @id @default(autoincrement())
+  cliente      Cliente?  @relation(fields: [clienteId], references: [id])
+  clienteId    Int?
+  vehiculo     Vehiculo? @relation(fields: [vehiculoId], references: [id])
+  vehiculoId   Int?
+  fecha        DateTime
+  observaciones String?
+  estado       String    @default("pendiente") // pendiente, confirmado, cancelado
+  creadoEn     DateTime  @default(now())
+}
+
+model Trabajo {
+  id                    Int                      @id @default(autoincrement())
+  nombre                String
+  precioBase            Float?
+  tiempoEstimadoMinutos Int?
+  ordenesRealizados     OrdenTrabajoRealizado[]
+}
+
+model Repuesto {
+  id        Int             @id @default(autoincrement())
+  nombre    String
+  precio    Float
+  stock     Int?
+  creadoEn  DateTime        @default(now())
+  ordenes   OrdenRepuesto[]
+}
+
+model OrdenTrabajo {
+  id                  Int                      @id @default(autoincrement())
+  cliente             Cliente                  @relation(fields: [clienteId], references: [id])
+  clienteId           Int
+  vehiculo            Vehiculo                 @relation(fields: [vehiculoId], references: [id])
+  vehiculoId          Int
+  kilometraje         Int?
+  fechaIngreso        DateTime                 @default(now())
+  problemaReportado   String?
+  estado              String                   @default("pendiente") // pendiente, en_reparacion, terminado, entregado
+  totalTrabajos       Float                    @default(0)
+  totalRepuestos      Float                    @default(0)
+  total               Float                    @default(0)
+  creadoEn            DateTime                 @default(now())
+  trabajosRealizados  OrdenTrabajoRealizado[]
+  repuestos           OrdenRepuesto[]
+  pagos               Pago[]
+}
+
+model OrdenTrabajoRealizado {
+  id                    Int           @id @default(autoincrement())
+  orden                 OrdenTrabajo  @relation(fields: [ordenId], references: [id])
+  ordenId               Int
+  trabajo               Trabajo       @relation(fields: [trabajoId], references: [id])
+  trabajoId             Int
+  descripcion           String?
+  precio                Float
+  tiempoEstimadoMinutos Int?
+}
+
+model OrdenRepuesto {
+  id            Int          @id @default(autoincrement())
+  orden         OrdenTrabajo @relation(fields: [ordenId], references: [id])
+  ordenId       Int
+  repuesto      Repuesto     @relation(fields: [repuestoId], references: [id])
+  repuestoId    Int
+  cantidad      Int          @default(1)
+  precioUnitario Float
+  subtotal      Float
+}
+
+model Pago {
+  id        Int          @id @default(autoincrement())
+  orden     OrdenTrabajo @relation(fields: [ordenId], references: [id])
+  ordenId   Int
+  fecha     DateTime     @default(now())
+  monto     Float
+  metodo    String?
+  observaciones String?
+}
