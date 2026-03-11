@@ -46,7 +46,7 @@ router.post('/', (req, res) => {
     patente,
     kilometraje: kilometraje ?? undefined,
     problemaReportado: problemaReportado ?? '',
-    estado: 'pendiente',
+    estado: 'pendiente' as EstadoOrden, // <--- Solución: Type Assertion
     fechaIngreso: new Date().toISOString()
   };
 
